@@ -78,8 +78,19 @@ export class InteractionController {
   }
 
   /** 场景就绪后调用一次，构建 BVH */
-  prepare(): { meshes: number; ms: number } {
-    return this.picker.buildBvh();
+  prepare(extraTargets: readonly THREE.Mesh[] = []): { meshes: number; ms: number } {
+    return this.picker.buildBvh(extraTargets);
+  }
+
+  /** LOD 切换后重建：先失效旧 BVH，再对新几何重绑 */
+  reprepare(extraTargets: readonly THREE.Mesh[] = []): { meshes: number; ms: number } {
+    this.picker.invalidate();
+    return this.picker.buildBvh(extraTargets);
+  }
+
+  /** 让 BVH 失效（不立即重建） */
+  pickerInvalidate(): void {
+    this.picker.invalidate();
   }
 
   /** 供测试/脚本调用的直接拾取（不经过指针事件） */

@@ -56,6 +56,7 @@ async function bootstrap(): Promise<void> {
   const world = new WorkshopWorld({
     manifest,
     baseUrl: ASSET_BASE,
+    qualityDefault: app.quality,
     onProgress: (ratio, message) => boot.progress(20 + ratio * 62, message),
   });
 
@@ -83,8 +84,34 @@ async function bootstrap(): Promise<void> {
     },
   });
 
-  const bvh = interaction.prepare();
+  // 环境合批件也要建 BVH：它们体量大，且是遮挡检测的主要目标
+  const staticMeshes: THREE.Mesh[] = [];
+  world.sceneRoot.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (mesh.isMesh && obj.name.startsWith('MERGED_')) staticMeshes.push(mesh);
+  });
+
+  const bvh = interaction.prepare(staticMeshes);
   boot.progress(90, `索引就绪（${bvh.meshes} 网格 / ${bvh.ms.toFixed(0)}ms）`);
+
+  // LOD 切换后重绑：BVH 需要对新几何重建，热点锚点也要跟着新包围盒走
+  world.onLevelChanged((level) => {
+    console.info(`[main] LOD${level} 生效，重绑拾取与热点`);
+    interaction.pickerInvalidate();
+    const newStatics: THREE.Mesh[] = [];
+    world.sceneRoot.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (mesh.isMesh && obj.name.startsWith('MERGED_')) newStatics.push(mesh);
+    });
+    interaction.reprepare(newStatics);
+    interaction.selectEntity(null);
+    const specs = hotspotBuilder.buildRebuild(() => {
+      const id = interaction.currentSelection;
+      if (id) interaction.focusEntity(id, { select: true });
+    });
+    interaction.setHotspots(specs);
+    interaction.attachHotspots(world.sceneRoot);
+  });
 
   // ---------------- 层级管理（厂区 ↔ 车间）
   const levels = new LevelManager(world.sceneRoot);
@@ -488,6 +515,12 @@ async function bootstrap(): Promise<void> {
       __bvh: bvh,
       __twin: twin,
       __THREE: THREE,
+      __bench: async () => {
+        const { runBench, reportToMarkdown } = await import('./systems/bench');
+        const report = await runBench(app, world);
+        console.info(reportToMarkdown(report));
+        return report;
+      },
     });
   }
 

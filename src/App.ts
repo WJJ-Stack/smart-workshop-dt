@@ -10,6 +10,7 @@ import { Viewport } from './core/Viewport';
 import { detectQualityTier, lowerTier, resolveProfile, type QualityProfile, type QualityTier } from './core/quality';
 import { EventBus } from './shared/EventBus';
 import type { AppEvents } from './shared/events';
+import type { PostFxHandles } from './world/postfx';
 
 /**
  * App 是世界（3D 内容）与运行时（渲染器/循环/输入）之间的组合根。
@@ -35,6 +36,8 @@ export interface World {
   build(ctx: WorldContext): Promise<void>;
   /** 每帧更新，delta 已钳制 */
   update(frame: FrameInfo): void;
+  /** 相机位置注入（LOD / 剔除等距离相关逻辑用） */
+  setCameraPosition?(pos: THREE.Vector3): void;
   /** 画质切换时需要重建的资源 */
   onQualityChange?(profile: QualityProfile): void;
   dispose(): void;
@@ -105,6 +108,7 @@ export class App {
       this.viewport.onChange((m) => {
         this.renderer.applyViewport();
         this.rig.setAspect(m.aspect);
+        this.postFx?.setSize(m.width, m.height, m.pixelRatio);
         this.bus.emit('resize', { width: m.width, height: m.height, pixelRatio: m.pixelRatio });
       }),
     );
@@ -211,6 +215,9 @@ export class App {
     this.renderer.setProfile(this.profile);
     this.viewport.setMaxPixelRatio(this.profile.maxPixelRatio);
     this.world?.onQualityChange?.(this.profile);
+    this.postFx?.setQuality(this.profile);
+    const m = this.viewport.current;
+    this.postFx?.setSize(m.width, m.height, m.pixelRatio);
     this.bus.emit('quality:changed', { profile: this.profile });
   }
   setAdaptiveQuality(enabled: boolean): void {
@@ -230,6 +237,8 @@ export class App {
     this.unsubscribers.length = 0;
     for (const fn of this.disposables.reverse()) fn();
     this.disposables.length = 0;
+    this.postFx?.dispose();
+    this.postFx = null;
     this.cameraMode.dispose();
     this.follow.dispose();
     this.fly.dispose();
@@ -249,9 +258,31 @@ export class App {
       if (!flyTook && !followTook) this.orbit.update();
     }
 
+    // 让世界拿到相机位置（LOD 距离判定用）
+    this.world?.setCameraPosition?.(this.rig.camera.position);
     this.world?.update(frame);
-    this.renderer.render(this.scene, this.rig.camera);
+
+    const postfx = this.postFx;
+    if (postfx && postfx.enabled) postfx.render(frame.delta, this.scene, this.rig.camera);
+    else this.renderer.render(this.scene, this.rig.camera);
+
     this.guardPerformance();
+  }
+
+  /** 世界注册的后处理管线 */
+  private postFx: PostFxHandles | null = null;
+
+  setPostFx(fx: PostFxHandles | null): void {
+    this.postFx?.dispose();
+    this.postFx = fx;
+    if (fx) {
+      const m = this.viewport.current;
+      fx.setSize(m.width, m.height, m.pixelRatio);
+    }
+  }
+
+  get currentPostFx(): PostFxHandles | null {
+    return this.postFx;
   }
 
   /**

@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import type { FrameInfo } from '../core/Loop';
 import type { QualityProfile } from '../core/quality';
 import type { World, WorldContext } from '../App';
@@ -6,6 +6,8 @@ import { AssetManager } from '../assets/AssetManager';
 import { readDt, type AssetManifest, type EquipmentKind, type EquipmentMeta } from '../assets/manifest';
 import { applyFog, createLighting, type LightingHandles } from './lighting';
 import { enhanceMaterials, type MaterialEnhanceResult } from './materialEnhance';
+import { createPostFx, type PostFxHandles } from './postfx';
+import { LodManager, sceneMetrics } from './LodManager';
 import { EntityRegistry, type Entity } from '../entities/EntityRegistry';
 
 /**
@@ -24,6 +26,8 @@ export interface WorkshopOptions {
   manifest: AssetManifest;
   baseUrl: string;
   onProgress?: (ratio: number, message: string) => void;
+  /** 初始画质档位（LOD 切换后重建材质时需要） */
+  qualityDefault?: QualityProfile;
 }
 
 export class WorkshopWorld implements World {
@@ -33,6 +37,16 @@ export class WorkshopWorld implements World {
   private assets!: AssetManager;
   private lighting: LightingHandles | null = null;
   private materials: MaterialEnhanceResult | null = null;
+  private postfx: PostFxHandles | null = null;
+  private lodManager: LodManager | null = null;
+  private sceneCenter = new THREE.Vector3();
+  /** 记录当前画质，LOD 切换重建材质时要用 */
+  private lastProfile: QualityProfile | null = null;
+
+  /** 公开只读访问，供调试与性能面板量化 LOD 行为 */
+  get lod(): LodManager | null {
+    return this.lodManager;
+  }
   private readonly root = new THREE.Group();
   private modelRoot: THREE.Object3D | null = null;
   private mixer: THREE.AnimationMixer | null = null;
@@ -41,6 +55,8 @@ export class WorkshopWorld implements World {
   /** 程序化动画：传送带皮带 UV 滚动 */
   private readonly beltMaterials = new Set<THREE.MeshStandardMaterial>();
   private beltOffset = 0;
+  /** 相机位置缓存（LOD 判定用） */
+  private readonly ctxCameraPos = new THREE.Vector3();
 
   constructor(opts: WorkshopOptions) {
     this.opts = opts;
@@ -57,6 +73,7 @@ export class WorkshopWorld implements World {
 
   async build(ctx: WorldContext): Promise<void> {
     ctx.scene.add(this.root);
+    this.lastProfile = ctx.quality;
 
     this.assets = new AssetManager(ctx.renderer);
     const hall = this.opts.manifest.hall;
@@ -83,6 +100,28 @@ export class WorkshopWorld implements World {
 
     this.report(0.97, '增强材质…');
     this.materials = enhanceMaterials(this.modelRoot, ctx.quality);
+
+    const metrics = sceneMetrics(this.modelRoot);
+    this.sceneCenter.copy(metrics.center);
+
+    this.report(0.99, '启用后处理…');
+    this.postfx = createPostFx(ctx.renderer.glRenderer, ctx.scene, ctx.rig.camera, ctx.quality);
+    ctx.app.setPostFx(this.postfx);
+
+    // LOD 管理器：首屏只用 LOD0，其余按需加载
+    this.lodManager = new LodManager({
+      scene: ctx.scene,
+      baseUrl: this.opts.baseUrl,
+      manifest: this.opts.manifest,
+      assets: this.assets,
+      container: this.root,
+      initialLevel: 0,
+      onSwitched: (level) => {
+        // 换模型后必须重建索引，否则 registry 还指向已卸载的旧 mesh，
+        // 拾取、高亮、热点全部失效（这是 LOD 最隐蔽的坑）
+        this.rebuildIndexForLevel(level);
+      },
+    });
 
     this.report(1, '就绪');
     ctx.bus.emit('resize', {
@@ -197,16 +236,69 @@ export class WorkshopWorld implements World {
         mat.map.offset.x = -this.beltOffset;
       }
     }
+
+    this.lodManager?.update(frame, this.ctxCameraPos, this.sceneCenter);
+  }
+
+  /** 由 App 每帧注入相机位置（避免 WorkshopWorld 直接持有相机引用） */
+  setCameraPosition(pos: THREE.Vector3): void {
+    this.ctxCameraPos.copy(pos);
   }
 
   onQualityChange(profile: QualityProfile): void {
+    this.lastProfile = profile;
     this.lighting?.setQuality(profile);
     this.materials?.setQuality(profile);
+    this.postfx?.setQuality(profile);
+    this.lodManager?.setEnabled(profile.tier !== 'low');
+    if (profile.tier === 'low') this.lodManager?.prefetch(2);
   }
 
   private lodFile(level: number): string {
     const entry = this.opts.manifest.lods.find((l) => l.level === level);
     return entry?.file ?? 'workshop.glb';
+  }
+
+  /** 外部（main.ts）注册，用于 LOD 切换后重绑 BVH 与高亮 */
+  private levelChangedHandler: ((level: number, registry: EntityRegistry) => void) | null = null;
+
+  onLevelChanged(fn: (level: number, registry: EntityRegistry) => void): void {
+    this.levelChangedHandler = fn;
+  }
+
+  /**
+   * LOD 切换后重建实体索引。
+   *
+   * 必须做，否则 registry 还指向已被移出场景的旧 mesh，
+   * 拾取会命中不可见对象、高亮修改的是孤儿材质 —— 这是 LOD 最隐蔽的 bug。
+   *
+   * 另外：新 LOD 模型由 Decimate 生成，不含动画轨道，
+   * 所以 AnimationMixer 继续绑定在 LOD0 上（远处本来也看不清关节动作）。
+   */
+  private rebuildIndexForLevel(level: number): void {
+    let current: THREE.Object3D | null = null;
+    for (const child of this.root.children) {
+      if (child.name.startsWith('WORKSHOP_MODEL')) {
+        current = child;
+        break;
+      }
+    }
+    if (!current) return;
+
+    this.registry.dispose();
+    this.indexEntities({ scene: current });
+
+    // 新模型的材质是独立实例，程序化贴图需要重新应用
+    this.materials?.dispose();
+    this.materials = null;
+    const profile = this.lastProfile ?? this.opts.qualityDefault;
+    if (profile) this.materials = enhanceMaterials(current, profile);
+
+    this.levelChangedHandler?.(level, this.registry);
+    console.info(
+      `[WorkshopWorld] LOD${level} 索引重建：${this.registry.entityCount} 实体 / ` +
+        `${this.registry.allInteractiveMeshes().length} 部件`,
+    );
   }
 
   private report(ratio: number, message: string): void {
@@ -233,6 +325,10 @@ export class WorkshopWorld implements World {
     this.materials?.dispose();
     this.materials = null;
 
+    this.lodManager?.dispose();
+    this.lodManager = null;
+    this.postfx = null;
+
     // 皮带材质是克隆出来的，必须单独释放
     for (const mat of this.beltMaterials) {
       mat.map?.dispose();
@@ -247,3 +343,4 @@ export class WorkshopWorld implements World {
     this.modelRoot = null;
   }
 }
+

@@ -44,20 +44,24 @@ export class Picker {
 
   /**
    * 为所有可拾取网格构建 BVH。
-   * 在场景加载完成后调用一次。耗时随三角面数线性增长（59k 约 60~120ms），
+   * 在场景加载完成后调用一次。耗时随三角面数线性增长，
    * 所以放在首屏加载之后、用户真正开始交互之前。
+   *
+   * 注意 extraTargets：环境合批件体积大（单个 2.7 万顶点），
+   * 虽然不参与业务拾取，但它们是**遮挡检测**与「点地面取消选中」的目标，
+   * 同样需要加速，否则热点遮挡检测（每 8 帧一次 × 8 个热点）会成为开销。
    */
-  buildBvh(): { meshes: number; ms: number } {
+  buildBvh(extraTargets: readonly THREE.Mesh[] = []): { meshes: number; ms: number } {
     if (this.bvhBuilt) return { meshes: 0, ms: 0 };
     const t0 = performance.now();
     const targets = this.opts.getTargets();
+    const all = extraTargets.length > 0 ? [...targets, ...extraTargets] : targets;
     let count = 0;
 
-    for (const mesh of targets) {
+    for (const mesh of all) {
       const geo = mesh.geometry;
       if (!geo) continue;
       // three-mesh-bvh 的 computeBoundsTree 是挂在 BufferGeometry 原型上的方法
-      // （用 computeBoundsTree.call(geo) 也行），这里用最直观的调用形式
       if (!geo.boundsTree) {
         computeBoundsTree.call(geo, { maxLeafTris: 8 });
       }

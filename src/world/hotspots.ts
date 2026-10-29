@@ -28,6 +28,14 @@ export class HotspotBuilder {
   }
 
   build(onClick: (hotspotId: string) => void): HotspotSpec[] {
+    return this.buildRebuild(onClick);
+  }
+
+  /**
+   * 重建热点（位置依据当前包围盒重新计算）。
+   * LOD 切换后实体几何变了，热点锚点必须重算，否则会飘在空中或陷进模型。
+   */
+  buildRebuild(onClick: (hotspotId: string) => void): HotspotSpec[] {
     const specs: HotspotSpec[] = [];
 
     const add = (

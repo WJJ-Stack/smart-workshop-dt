@@ -1,0 +1,72 @@
+{
+  "env": {
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Laptop GPU (0x00002560) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "dpr": 1.5,
+    "canvas": { "w": 2880, "h": 1620 },
+    "tier": "high"
+  },
+  "noPostFx": {
+    "medianMs": 5.2,
+    "p95Ms": 7.5,
+    "fps": 192.3,
+    "drawCalls": 301,
+    "triangles": 108152,
+    "textures": 13,
+    "programs": 18
+  },
+  "withPostFx": {
+    "medianMs": 5.9,
+    "p95Ms": 13,
+    "fps": 169.5,
+    "drawCalls": 320,
+    "triangles": 108171,
+    "textures": 35,
+    "programs": 24
+  },
+  "tiers": {
+    "high": {
+      "medianMs": 6.3,
+      "p95Ms": 7.3,
+      "fps": 158.7,
+      "drawCalls": 320,
+      "triangles": 108171,
+      "textures": 37,
+      "programs": 24
+    },
+    "medium": {
+      "medianMs": 8.8,
+      "p95Ms": 9.4,
+      "fps": 113.6,
+      "drawCalls": 320,
+      "triangles": 108171,
+      "textures": 37,
+      "programs": 27
+    },
+    "low": {
+      "medianMs": 3.8,
+      "p95Ms": 5.2,
+      "fps": 263.2,
+      "drawCalls": 136,
+      "triangles": 52016,
+      "textures": 5,
+      "programs": 24
+    }
+  },
+  "pickingParts": {
+    "bvhPerPickMs": 0.032,
+    "plainPerPickMs": 0.017,
+    "speedup": 0.5,
+    "triangles": 25818
+  },
+  "pickingStatic": {
+    "bvhPerPickMs": 0.005,
+    "plainPerPickMs": 2.361,
+    "speedup": 472.2,
+    "triangles": 33108
+  },
+  "culling": { "total": 179, "visible": 136, "culled": 43, "ratioPct": 24 },
+  "lod": { "level": 0, "switches": 0, "loadMs": 0 },
+  "loadMs": 4,
+  "loadBytes": 606832,
+  "_note": "采集方式：页面内 window.__bench()，每档 40 帧采样取中位数，每帧 readPixels 强制 GPU 同步。中位帧耗时不含 rAF 等待与浏览器合成开销，因此等效 FPS 高于实际屏幕帧率。"
+}

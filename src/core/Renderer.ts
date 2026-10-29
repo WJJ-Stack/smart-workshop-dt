@@ -143,6 +143,11 @@ export class Renderer {
     this.gl.render(scene, camera);
   }
 
+  /** 由后处理管线接管渲染（composer 内部会调用 renderer） */
+  get glRenderer(): THREE.WebGLRenderer {
+    return this.gl;
+  }
+
   resetInfo(): void {
     this.gl.info.reset();
   }
