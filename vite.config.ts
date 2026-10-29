@@ -21,6 +21,10 @@ export default defineConfig({
     assetsInlineLimit: 4096,
     chunkSizeWarningLimit: 1600,
     rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        assets: fileURLToPath(new URL('./assets.html', import.meta.url)),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/three/')) return 'three';

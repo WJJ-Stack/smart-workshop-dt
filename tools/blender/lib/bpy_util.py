@@ -100,8 +100,21 @@ def apply_transform(obj: bpy.types.Object, *, scale: bool = True, rot: bool = Tr
 
 
 def deselect_all() -> None:
-    for o in bpy.context.view_layer.objects:
-        o.select_set(False)
+    """取消全部选择。
+
+    必须先 view_layer.update()：批量 bpy.data.objects.remove() 之后，
+    view_layer.objects 里会残留已删除对象的失效引用，
+    直接遍历会触发 'NoneType' object has no attribute 'select_set'。
+    """
+    try:
+        bpy.context.view_layer.update()
+    except RuntimeError:
+        pass
+    for o in list(bpy.context.view_layer.objects):
+        try:
+            o.select_set(False)
+        except (ReferenceError, AttributeError):
+            continue
 
 
 def join(objects: Sequence[bpy.types.Object], name: str) -> bpy.types.Object:
@@ -135,8 +148,18 @@ def add_bevel(obj: bpy.types.Object, width: float = 0.02, segments: int = 2, ang
 
 
 def apply_modifier(obj: bpy.types.Object, name: str) -> None:
+    """应用修改器。
+
+    注意：这里必须 obj 仍然 link 在场景里，且要临时选中它。
+    cull 之后对象引用可能已失效，调用方需保证 obj 有效。
+    """
     deselect_all()
-    obj.select_set(True)
+    if not obj.name:
+        return
+    try:
+        obj.select_set(True)
+    except ReferenceError:
+        return
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.modifier_apply(modifier=name)
 

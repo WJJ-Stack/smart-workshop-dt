@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05080d" />
+    <title>实景与点云 · 3DGS / Point Cloud / 3D Tiles</title>
+    <style>
+      :root {
+        --bg: #05080d;
+        --panel: rgba(11, 19, 30, 0.88);
+        --border: rgba(90, 170, 255, 0.18);
+        --text: #dbe7f5;
+        --dim: #7c90a7;
+        --faint: #4d5f73;
+        --accent: #3fa9ff;
+        --ok: #35d68a;
+        --font: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Noto Sans SC', sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0; height: 100%; overflow: hidden;
+        background: var(--bg); color: var(--text); font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+      #canvas { display: block; width: 100%; height: 100%; height: 100dvh; touch-action: none; outline: none; }
+      .bar {
+        position: fixed; top: 0; left: 0; right: 0; height: 50px;
+        display: flex; align-items: center; gap: 12px; padding: 0 14px;
+        background: linear-gradient(180deg, rgba(3,6,10,.95), rgba(3,6,10,.4), transparent);
+        z-index: 20;
+      }
+      .brand { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .12em; }
+      .brand i { width: 7px; height: 7px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 10px var(--accent); font-style: normal; }
+      .tabs { display: flex; gap: 4px; }
+      .tab {
+        padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px;
+        background: rgba(13,22,34,.7); color: var(--dim); font-family: inherit; font-size: 11px;
+        cursor: pointer; white-space: nowrap; transition: all .14s;
+      }
+      .tab:hover { color: var(--text); border-color: rgba(90,170,255,.4); }
+      .tab.on { color: #cbe6ff; border-color: rgba(63,169,255,.6); background: rgba(63,169,255,.14); }
+      .spacer { flex: 1; }
+      .panel {
+        position: fixed; bottom: 12px; left: 12px; min-width: 190px; padding: 9px 11px;
+        border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
+        backdrop-filter: blur(12px); font-size: 11px; line-height: 1.7; z-index: 20;
+      }
+      .panel h4 { margin: 0 0 5px; font-size: 9px; letter-spacing: .2em; color: var(--faint); font-weight: 400; }
+      .row { display: flex; justify-content: space-between; gap: 16px; }
+      .row span:first-child { color: var(--faint); }
+      .row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+      .row b { color: var(--accent); font-weight: 400; }
+      .ctrl {
+        position: fixed; bottom: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px;
+        padding: 10px; border: 1px solid var(--border); border-radius: 8px;
+        background: var(--panel); backdrop-filter: blur(12px); z-index: 20; min-width: 176px;
+      }
+      .ctrl label { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: var(--faint); }
+      .ctrl input[type=range] { width: 100%; accent-color: var(--accent); }
+      .ctrl button {
+        padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
+        background: rgba(255,255,255,.04); color: var(--dim); font-family: inherit; font-size: 10px;
+        cursor: pointer; transition: all .13s;
+      }
+      .ctrl button:hover { color: var(--text); border-color: rgba(63,169,255,.5); }
+      .boot {
+        position: fixed; inset: 0; display: grid; place-content: center; gap: 16px;
+        background: radial-gradient(circle at 50% 44%, #0b1520, #03060a 70%); z-index: 100;
+        transition: opacity .5s;
+      }
+      .boot.off { opacity: 0; pointer-events: none; }
+      .boot .t { font-size: 12px; letter-spacing: .4em; color: var(--accent); text-align: center; text-indent: .4em; }
+      .boot .p { width: min(260px, 60vw); height: 2px; background: rgba(255,255,255,.09); margin: 0 auto; overflow: hidden; }
+      .boot .p i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2b8fe0, #a6e2ff); transition: width .25s; }
+      .boot .m { font-size: 10px; color: var(--dim); text-align: center; }
+      .note {
+        position: fixed; top: 58px; left: 50%; transform: translateX(-50%);
+        padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+        background: var(--panel); backdrop-filter: blur(10px);
+        font-size: 10px; color: var(--dim); z-index: 19; max-width: 76vw; text-align: center;
+      }
+      @media (max-width: 760px) {
+        .brand span { display: none; }
+        .panel, .ctrl { font-size: 10px; }
+        .ctrl { min-width: 140px; }
+        .note { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <div class="bar">
+      <div class="brand"><i></i><span>实景与点云</span></div>
+      <div class="tabs">
+        <button class="tab on" data-mode="tiles">3D Tiles</button>
+        <button class="tab" data-mode="points">点云</button>
+        <button class="tab" data-mode="splat">3DGS</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="tab" id="back">← 返回数字孪生</button>
+    </div>
+
+    <div class="note" id="note"></div>
+
+    <div class="panel">
+      <h4>STATS</h4>
+      <div id="stats"></div>
+    </div>
+
+    <div class="ctrl" id="ctrl"></div>
+
+    <div class="boot" id="boot">
+      <div class="t">ASSET VIEWER</div>
+      <div class="p"><i id="bootBar"></i></div>
+      <div class="m" id="bootMsg">初始化…</div>
+    </div>
+
+    <script type="module" src="/src/pages/assetViewer.ts"></script>
+  </body>
+</html>

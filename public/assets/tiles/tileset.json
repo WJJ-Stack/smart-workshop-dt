@@ -1,0 +1,504 @@
+{
+  "asset": {
+    "version": "1.1",
+    "generator": "tools/blender/build_tiles.py"
+  },
+  "geometricError": 200.0,
+  "root": {
+    "boundingVolume": {
+      "box": [
+        0.0,
+        3.8,
+        0.0,
+        20.0,
+        0,
+        0,
+        0,
+        3.8,
+        0,
+        0,
+        0,
+        14.0
+      ]
+    },
+    "geometricError": 100.0,
+    "refine": "REPLACE",
+    "children": [
+      {
+        "boundingVolume": {
+          "box": [
+            -15.0,
+            3.8,
+            -9.3333,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_0_0_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 35780,
+          "tris": 1608,
+          "kept": 14
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                -15.0,
+                3.8,
+                -9.3333,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_0_0_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 29380,
+              "tris": 540,
+              "kept": 14
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            -15.0,
+            3.8,
+            -0.0,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_0_1_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 79840,
+          "tris": 5028,
+          "kept": 35
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                -15.0,
+                3.8,
+                -0.0,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_0_1_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 68400,
+              "tris": 1710,
+              "kept": 35
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            -15.0,
+            3.8,
+            9.3333,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_0_2_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 9180,
+          "tris": 344,
+          "kept": 2
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                -15.0,
+                3.8,
+                9.3333,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_0_2_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 8372,
+              "tris": 118,
+              "kept": 2
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            -5.0,
+            3.8,
+            -0.0,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_1_1_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 96136,
+          "tris": 6396,
+          "kept": 37
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                -5.0,
+                3.8,
+                -0.0,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_1_1_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 82440,
+              "tris": 2180,
+              "kept": 37
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            -5.0,
+            3.8,
+            9.3333,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_1_2_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 43300,
+          "tris": 6048,
+          "kept": 1
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                -5.0,
+                3.8,
+                9.3333,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_1_2_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 35592,
+              "tris": 2116,
+              "kept": 1
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            5.0,
+            3.8,
+            -0.0,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_2_1_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 265152,
+          "tris": 32874,
+          "kept": 43
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                5.0,
+                3.8,
+                -0.0,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_2_1_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 216120,
+              "tris": 11488,
+              "kept": 43
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            15.0,
+            3.8,
+            -9.3333,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_3_0_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 24704,
+          "tris": 1324,
+          "kept": 9
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                15.0,
+                3.8,
+                -9.3333,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_3_0_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 21308,
+              "tris": 452,
+              "kept": 9
+            }
+          }
+        ]
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            15.0,
+            3.8,
+            -0.0,
+            5.0,
+            0,
+            0,
+            0,
+            3.8,
+            0,
+            0,
+            0,
+            4.6667
+          ]
+        },
+        "geometricError": 40.0,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "cell_3_1_lod0.glb"
+        },
+        "_stats": {
+          "bytes": 71008,
+          "tris": 4200,
+          "kept": 30
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "box": [
+                15.0,
+                3.8,
+                -0.0,
+                5.0,
+                0,
+                0,
+                0,
+                3.8,
+                0,
+                0,
+                0,
+                4.6667
+              ]
+            },
+            "geometricError": 0.0,
+            "refine": "REPLACE",
+            "content": {
+              "uri": "cell_3_1_lod1.glb"
+            },
+            "_stats": {
+              "bytes": 61304,
+              "tris": 1420,
+              "kept": 30
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "_meta": {
+    "grid": [
+      4,
+      3
+    ],
+    "tiles": 16,
+    "totalBytes": 1148016,
+    "totalTris": 77846,
+    "units": "meter",
+    "upAxis": "Y"
+  }
+}

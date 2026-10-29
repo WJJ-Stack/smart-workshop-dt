@@ -61,7 +61,6 @@ body {
   overflow: hidden;
 }
 
-/* overlay 的直接子元素默认可交互，但纯展示型组件单独关掉 */
 #overlay > * {
   pointer-events: auto;
 }
@@ -98,6 +97,11 @@ body {
   letter-spacing: 0.22em;
   color: var(--text-faint);
   margin-bottom: 5px;
+}
+
+.hud__grid {
+  display: grid;
+  gap: 1px;
 }
 
 .hud__row {
@@ -726,68 +730,7 @@ body {
   color: var(--text-faint);
 }
 
-/* ============================================================ 自适应 */
-
-@media (max-width: 900px) {
-  .topbar {
-    height: 46px;
-    gap: 8px;
-    padding: 0 9px;
-  }
-  .topbar__name {
-    display: none;
-  }
-  .topbar__views {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .topbar__views::-webkit-scrollbar {
-    display: none;
-  }
-  .device-list {
-    top: 54px;
-    width: 176px;
-    max-height: 46%;
-  }
-  .info-card {
-    top: auto;
-    bottom: 10px;
-    right: 8px;
-    left: 8px;
-    width: auto;
-    max-height: 52%;
-    overflow-y: auto;
-  }
-  .hud {
-    font-size: 10px;
-    min-width: 130px;
-  }
-}
-
-@media (max-width: 560px) {
-  .device-list {
-    display: none;
-  }
-  .chip {
-    padding: 5px 7px;
-    font-size: 10px;
-  }
-  .chip__key {
-    display: none;
-  }
-}
-
-/* UI 隐藏模式：按 H 得到纯净画面用于录屏 */
-body.ui-hidden .topbar,
-body.ui-hidden .device-list,
-body.ui-hidden .info-card,
-body.ui-hidden .hud {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.24s var(--ease);
-}
-
-/* ============================================================ KPI ָ���� */
+/* ============================================================ KPI 指标条 */
 
 .kpi-bar {
   position: absolute;
@@ -859,7 +802,7 @@ body.ui-hidden .hud {
   color: rgba(53, 214, 138, 0.6);
 }
 
-/* ============================================================ �澯�б� */
+/* ============================================================ 告警列表 */
 
 .alert-feed {
   position: absolute;
@@ -944,35 +887,7 @@ body.ui-hidden .hud {
   color: var(--ok);
 }
 
-@media (max-width: 1100px) {
-  .kpi-bar {
-    gap: 0;
-  }
-  .kpi {
-    min-width: 66px;
-    padding: 6px 8px;
-  }
-  .kpi__value {
-    font-size: 13px;
-  }
-  .kpi__spark {
-    display: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .alert-feed {
-    display: none;
-  }
-  .kpi-bar {
-    bottom: 8px;
-  }
-  .kpi:nth-child(n + 3) {
-    display: none;
-  }
-}
-
-/* ============================================================ AGV ������� */
+/* ============================================================ AGV 调度面板 */
 
 .route-panel {
   position: absolute;
@@ -985,8 +900,7 @@ body.ui-hidden .hud {
   backdrop-filter: blur(12px);
   overflow: hidden;
   z-index: 24;
-  /* ��Ϣ����ʾʱ���ƣ������ص� */
-  transition: transform 0.24s var(--ease);
+  transition: transform 0.24s var(--ease), opacity 0.24s var(--ease);
 }
 
 body.card-open .route-panel {
@@ -1053,7 +967,7 @@ body.card-open .route-panel {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* ============================================================ ������ʾ */
+/* ============================================================ 漫游提示 */
 
 .fly-hint {
   position: absolute;
@@ -1089,7 +1003,67 @@ body.card-open .route-panel {
   color: var(--text);
 }
 
+/* ============================================================ 自适应 */
+
+@media (max-width: 1100px) {
+  .kpi-bar {
+    gap: 0;
+  }
+  .kpi {
+    min-width: 66px;
+    padding: 6px 8px;
+  }
+  .kpi__value {
+    font-size: 13px;
+  }
+  .kpi__spark {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
+  .topbar {
+    height: 46px;
+    gap: 8px;
+    padding: 0 9px;
+  }
+  .topbar__name {
+    display: none;
+  }
+  .topbar__views {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topbar__views::-webkit-scrollbar {
+    display: none;
+  }
+  .device-list {
+    top: 54px;
+    width: 176px;
+    max-height: 46%;
+  }
+  .info-card {
+    top: auto;
+    bottom: 10px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: 52%;
+    overflow-y: auto;
+  }
+  .hud {
+    font-size: 10px;
+    min-width: 130px;
+  }
+  .alert-feed {
+    display: none;
+  }
+  .kpi-bar {
+    bottom: 8px;
+  }
+  .kpi:nth-child(n + 3) {
+    display: none;
+  }
   .route-panel {
     top: auto;
     bottom: 58px;
@@ -1099,4 +1073,38 @@ body.card-open .route-panel {
   .route-panel__actions {
     display: none;
   }
+  .fly-hint {
+    bottom: 62px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 560px) {
+  .device-list {
+    display: none;
+  }
+  .chip {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+  .chip__key {
+    display: none;
+  }
+  .fly-hint {
+    display: none;
+  }
+}
+
+/* UI 隐藏模式：按 H 得到纯净画面用于录屏 */
+body.ui-hidden .topbar,
+body.ui-hidden .device-list,
+body.ui-hidden .info-card,
+body.ui-hidden .hud,
+body.ui-hidden .kpi-bar,
+body.ui-hidden .alert-feed,
+body.ui-hidden .route-panel,
+body.ui-hidden .fly-hint {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s var(--ease);
 }

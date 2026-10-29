@@ -10,10 +10,8 @@
 *.ksplat filter=lfs diff=lfs merge=lfs -text
 *.spz   filter=lfs diff=lfs merge=lfs -text
 *.psd   filter=lfs diff=lfs merge=lfs -text
-
 # 3D Tiles 瓦片批量
 public/assets/tiles/**/*.b3dm filter=lfs diff=lfs merge=lfs -text
-
 # 源码与配置正常走 git
 *.ts    text
 *.js    text
@@ -21,3 +19,6 @@ public/assets/tiles/**/*.b3dm filter=lfs diff=lfs merge=lfs -text
 *.json  text
 *.css   text
 *.md    text
+public/assets/**/*.glb filter=lfs diff=lfs merge=lfs -text
+public/assets/**/*.ply filter=lfs diff=lfs merge=lfs -text
+public/assets/**/*.splat filter=lfs diff=lfs merge=lfs -text

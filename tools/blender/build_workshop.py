@@ -195,16 +195,23 @@ def export_lods(opts: dict, mats: dict[str, bpy.types.Material]) -> list[dict]:
 
 
 def _apply_decimate(ratio: float) -> None:
-    """对所有 mesh 应用 Decimate。collapsed 模式下 ratio 即保留比例。"""
+    """对所有 mesh 应用 Decimate。collapsed 模式下 ratio 即保留比例。
+
+    每次操作后重新获取对象列表，因为 modifier_apply 可能改变对象的
+    users_collection / 引用有效性（尤其在批量 cull 之后）。
+    """
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     for obj in meshes:
-        if len(obj.data.polygons) < 20:
-            continue
-        mod = obj.modifiers.new("LOD", "DECIMATE")
-        mod.decimate_type = "COLLAPSE"
-        mod.ratio = ratio
-        mod.use_collapse_triangulate = True
-        U.apply_modifier(obj, "LOD")
+        try:
+            if len(obj.data.polygons) < 20:
+                continue
+            mod = obj.modifiers.new("LOD", "DECIMATE")
+            mod.decimate_type = "COLLAPSE"
+            mod.ratio = ratio
+            mod.use_collapse_triangulate = True
+            U.apply_modifier(obj, "LOD")
+        except (ReferenceError, RuntimeError) as err:
+            print(f"[WARN] decimate 跳过 {getattr(obj, 'name', '?')}: {err}")
 
 
 def export_individual_equipment(opts: dict, mats: dict[str, bpy.types.Material]) -> list[dict]:

@@ -45,3 +45,12 @@ venv/
 
 # --- heavy binary assets are tracked via LFS (see .gitattributes) ---
 tools/blender/*.zip
+
+# 3DGS 训练输入：95 张渲染图 + transforms.json，共约 47MB。
+# 产物可随时用 render_for_splat.py 重新生成，不入库。
+public/assets/splat/train/
+# 高斯 PLY 中间件（.splat 才是前端实际消费的格式）
+public/assets/splat/workshop_gaussians.ply
+
+# Blender 构建日志
+*.log

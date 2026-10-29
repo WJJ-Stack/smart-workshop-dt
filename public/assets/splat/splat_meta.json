@@ -1,0 +1,8 @@
+{
+  "gaussians": 200000,
+  "source": "geometry-sampled",
+  "note": "几何采样生成，非常规 3DGS 训练。详见 tools/blender/export_splat.py 顶部说明。",
+  "units": "meter",
+  "upAxis": "Y",
+  "splatBytes": 6400000
+}
