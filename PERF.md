@@ -166,7 +166,7 @@ three 默认开启 `frustumCulled`，无需额外代码，但要保证几何的 
 | 纹理显存无法准确统计 | 估算值为 0（CanvasTexture 未带 width/height 到统计） | 需在 `trackTexture` 时记录尺寸 |
 | 阴影仅单级 | 全场景一张 2048 阴影图 | 可加 CSM（级联阴影）提升近处精度 |
 | 3DGS 排序 21ms | CPU 排序 20 万高斯 | 应换 GPU 基数排序（需 compute shader，WebGL2 下复杂度高一个量级） |
-| 3DGS 画面偏软 | 几何采样生成，非训练结果 | 装好 CUDA toolkit 后跑 `tools/gsplat/train.py` 覆盖 |
+| 3DGS 画面偏软 | 几何采样生成，非训练结果 | 装好 CUDA toolkit（需管理员权限）后跑 `tools/gsplat/train.py` 覆盖 |
 | 资产页非活跃标签页 rAF 被节流 | 自动化测试时瓦片数显示 0 | 测试时需保持窗口聚焦，或改用 `setTimeout` 驱动 `tiles.update()` |
 
 ---

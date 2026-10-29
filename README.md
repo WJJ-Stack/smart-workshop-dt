@@ -205,13 +205,32 @@ glTF 加载后多个 mesh 可能共享同一材质实例。直接改 `material.e
 - `tools/blender/render_for_splat.py` —— 渲染 95 个多视角图像 + `transforms.json`（已跑通，产物在 `public/assets/splat/train/`）
 - `tools/gsplat/train.py` —— gsplat 训练脚本（含 `DefaultStrategy` 致密化、PSNR 监控、`.splat` 导出）
 
-未能跑通的原因：gsplat 的 CUDA 内核需要 CUDA toolkit 编译，本机未安装（`winget install Nvidia.CUDA` 长时间无响应）；且机器只有 6GB 显存，训练 640×480×95 帧有 OOM 风险。环境就绪后执行：
+未能跑通的原因（已实测确认）：
+
+1. **gsplat 的 CUDA 内核需要 CUDA toolkit 编译**，本机 `CUDA_HOME = None`；
+2. 用 `winget install --id Nvidia.CUDA --version 12.4 --silent` 尝试安装：
+   下载与哈希校验均成功，但**启动安装程序时因缺少管理员权限失败**，
+   退出码 `0xE0E00000`（耗时 638 秒）。当前 shell 非 elevated。
+3. 机器只有 6GB 显存，训练 640×480×95 帧也有 OOM 风险。
+4. gsplat 官方预编译 wheel 源（`docs.gsplat.studio/whl/pt26cu124`）
+   对 torch 2.6 + cu124 无可用分发。
+
+补齐环境的正确做法（需要**以管理员身份**打开终端）：
+
+```powershell
+winget install --id Nvidia.CUDA --version 12.4 --accept-package-agreements --accept-source-agreements
+# 装完确认：
+nvcc --version
+```
+
+然后执行训练（会覆盖 `workshop.splat`，前端无需改动）：
 
 ```powershell
 E:\venvs\gsplat\Scripts\python.exe tools/gsplat/train.py --iters 7000 --sh-degree 1
 ```
 
-即会覆盖 `workshop.splat`，前端无需改动。
+训练输入已就绪：`public/assets/splat/train/`（95 张 640×480 图 + `transforms.json`），
+可用 `render_for_splat.py` 重新生成（默认不入库，见 `.gitignore`）。
 
 ---
 
