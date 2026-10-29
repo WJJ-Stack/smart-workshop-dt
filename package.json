@@ -1,0 +1,29 @@
+{
+  "name": "smart-workshop-dt",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "智能装配车间数字孪生 · Web3D 演示系统 (Three.js + TypeScript)",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "3d-tiles-renderer": "0.5.3",
+    "postprocessing": "6.39.5",
+    "three": "0.186.1",
+    "three-mesh-bvh": "0.9.17"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/three": "0.186.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.5"
+  }
+}

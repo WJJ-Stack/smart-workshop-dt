@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "generatedBy": "tools/blender/build_workshop.py",
+  "units": "meter",
+  "upAxis": "Y",
+  "hall": {
+    "length": 40.0,
+    "width": 28.0,
+    "height": 7.6
+  },
+  "models": [
+    {
+      "file": "workshop.glb",
+      "lod": "LOD0",
+      "tris": 59038,
+      "verts": 30500,
+      "bytes": 606832,
+      "exportSec": 2.91
+    },
+    {
+      "file": "workshop_lod1.glb",
+      "lod": "LOD1",
+      "tris": 26490,
+      "verts": 14226,
+      "bytes": 571532,
+      "exportSec": 0.55
+    },
+    {
+      "file": "workshop_lod2.glb",
+      "lod": "LOD2",
+      "tris": 8836,
+      "verts": 5399,
+      "bytes": 336884,
+      "exportSec": 0.51
+    },
+    {
+      "file": "equipment/feeder.glb",
+      "tris": 1744,
+      "bytes": 28340
+    },
+    {
+      "file": "equipment/conveyor.glb",
+      "tris": 3020,
+      "bytes": 44052
+    },
+    {
+      "file": "equipment/robot.glb",
+      "tris": 2756,
+      "bytes": 40184
+    },
+    {
+      "file": "equipment/inspection.glb",
+      "tris": 1246,
+      "bytes": 28840
+    },
+    {
+      "file": "equipment/packer.glb",
+      "tris": 2488,
+      "bytes": 41320
+    },
+    {
+      "file": "equipment/agv.glb",
+      "tris": 1484,
+      "bytes": 22716
+    },
+    {
+      "file": "equipment/cabinet.glb",
+      "tris": 744,
+      "bytes": 13988
+    }
+  ],
+  "lods": [
+    {
+      "level": 0,
+      "file": "workshop.glb",
+      "maxDistance": 90
+    },
+    {
+      "level": 1,
+      "file": "workshop_lod1.glb",
+      "maxDistance": 200
+    },
+    {
+      "level": 2,
+      "file": "workshop_lod2.glb",
+      "maxDistance": 600
+    }
+  ],
+  "layout": {
+    "feeder": {
+      "x": -17.0,
+      "y": 0.0,
+      "z": 0
+    },
+    "conveyor_a": {
+      "x": -13.0,
+      "y": 0.0,
+      "z": 0
+    },
+    "robot_a": {
+      "x": -8.6,
+      "y": 0.0,
+      "z": 0
+    },
+    "conveyor_b": {
+      "x": -4.6,
+      "y": 0.0,
+      "z": 0
+    },
+    "inspect": {
+      "x": 0.6,
+      "y": 0.0,
+      "z": 0
+    },
+    "robot_b": {
+      "x": 5.0,
+      "y": 0.0,
+      "z": 0
+    },
+    "conveyor_c": {
+      "x": 9.0,
+      "y": 0.0,
+      "z": 0
+    },
+    "packer": {
+      "x": 13.4,
+      "y": 0.0,
+      "z": 0
+    }
+  },
+  "animations": {
+    "EQ_robot_01": "EQ_robot_01_cycle",
+    "EQ_robot_02": "EQ_robot_02_cycle",
+    "EQ_inspect_01": "EQ_inspect_01_scan",
+    "EQ_agv_01": "EQ_agv_01_wheels",
+    "EQ_agv_02": "EQ_agv_02_wheels"
+  },
+  "equipment": {
+    "EQ_feeder_01": {
+      "kind": "feeder",
+      "title": "上料机",
+      "station": 1
+    },
+    "EQ_conveyor_a": {
+      "kind": "conveyor",
+      "title": "输送带 A",
+      "station": 2
+    },
+    "EQ_robot_01": {
+      "kind": "robot",
+      "title": "装配机械臂 #1",
+      "station": 3
+    },
+    "EQ_conveyor_b": {
+      "kind": "conveyor",
+      "title": "输送带 B",
+      "station": 4
+    },
+    "EQ_inspect_01": {
+      "kind": "inspection",
+      "title": "视觉检测工位",
+      "station": 5
+    },
+    "EQ_robot_02": {
+      "kind": "robot",
+      "title": "装配机械臂 #2",
+      "station": 6
+    },
+    "EQ_conveyor_c": {
+      "kind": "conveyor",
+      "title": "输送带 C",
+      "station": 7
+    },
+    "EQ_packer_01": {
+      "kind": "packer",
+      "title": "包装码垛工位",
+      "station": 8
+    },
+    "EQ_agv_01": {
+      "kind": "agv",
+      "title": "AGV #1",
+      "station": 0
+    },
+    "EQ_agv_02": {
+      "kind": "agv",
+      "title": "AGV #2",
+      "station": 0
+    }
+  }
+}
