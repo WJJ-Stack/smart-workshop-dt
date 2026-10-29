@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControl } from './core/OrbitControl';
+import { FlyControl } from './core/FlyControl';
+import { FollowDirector, CameraModeController } from './core/CameraDirector';
 import { CameraRig, type CameraPose } from './core/CameraRig';
 import { Loop, type FrameInfo } from './core/Loop';
 import { PointerInput } from './core/PointerInput';
@@ -60,6 +62,9 @@ export class App {
   readonly loop = new Loop();
   readonly input: PointerInput;
   readonly orbit: OrbitControl;
+  readonly fly: FlyControl;
+  readonly follow: FollowDirector;
+  readonly cameraMode: CameraModeController;
 
   private world: World | null = null;
   private profile: QualityProfile;
@@ -116,8 +121,28 @@ export class App {
       maxPolarAngleDeg: 87,
     });
 
+    this.fly = new FlyControl({
+      domElement: opts.canvas,
+      camera: this.rig.camera,
+      rig: this.rig,
+      speed: 9,
+      bounds: {
+        min: new THREE.Vector3(-220, 0.6, -220),
+        max: new THREE.Vector3(220, 90, 220),
+      },
+    });
+
+    this.follow = new FollowDirector({ rig: this.rig });
+    this.cameraMode = new CameraModeController({
+      orbit: { setEnabled: (v) => this.orbit.setEnabled(v) },
+      fly: { enter: () => this.fly.enter(), exit: () => this.fly.exit() },
+      follow: { stop: () => this.follow.stop() },
+    });
+
     // 用户手动操作时打断相机飞行
-    this.unsubscribers.push(this.input.onDown(() => this.rig.cancelTransition()));
+    this.unsubscribers.push(this.input.onDown(() => {
+      if (this.cameraMode.current === 'orbit') this.rig.cancelTransition();
+    }));
 
     this.loop.add((f) => this.tick(f), 0);
   }
@@ -160,12 +185,25 @@ export class App {
   }
 
   flyTo(pose: CameraPose, onComplete?: () => void): void {
+    // 相机飞行时强制回到 orbit 模式，否则 fly/follow 会在飞行结束后抢走相机
+    if (this.cameraMode.current !== 'orbit') this.cameraMode.set('orbit');
     this.bus.emit('camera:transition:start', { to: pose });
     this.rig.flyTo(pose, () => {
       this.orbit.syncFromRig();
       this.bus.emit('camera:transition:end', {});
       onComplete?.();
     });
+  }
+
+  /** 切换相机模式 */
+  setCameraMode(mode: 'orbit' | 'fly' | 'follow'): void {
+    this.cameraMode.set(mode);
+  }
+
+  /** 跟随某个对象 */
+  followObject(object: THREE.Object3D): void {
+    this.cameraMode.set('follow');
+    this.follow.follow(object);
   }
 
   setQuality(tier: QualityTier): void {
@@ -192,6 +230,9 @@ export class App {
     this.unsubscribers.length = 0;
     for (const fn of this.disposables.reverse()) fn();
     this.disposables.length = 0;
+    this.cameraMode.dispose();
+    this.follow.dispose();
+    this.fly.dispose();
     this.orbit.dispose();
     this.input.dispose();
     this.viewport.dispose();
@@ -201,7 +242,12 @@ export class App {
 
   private tick(frame: FrameInfo): void {
     const transitioned = this.rig.update(frame.delta);
-    if (!transitioned) this.orbit.update();
+    if (!transitioned) {
+      // 相机模式互斥，由各自的控制器决定谁写 camera.position
+      const flyTook = this.fly.update(frame.delta);
+      const followTook = flyTook ? false : this.follow.update(frame.delta);
+      if (!flyTook && !followTook) this.orbit.update();
+    }
 
     this.world?.update(frame);
     this.renderer.render(this.scene, this.rig.camera);

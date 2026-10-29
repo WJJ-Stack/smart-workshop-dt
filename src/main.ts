@@ -13,6 +13,10 @@ import { HotspotBuilder } from './world/hotspots';
 import { MockTwinSource } from './systems/TwinSource';
 import { TwinBinding } from './systems/TwinBinding';
 import { clockTime, metricsFor, statusLabel } from './systems/twinFormat';
+import { buildRoadGraph } from './systems/RoadNetwork';
+import { AgvFleet, RoutePlanner, RouteVisual } from './systems/Route';
+import { LevelManager } from './core/CameraDirector';
+import { RoutePanel } from './ui/RoutePanel';
 import type { EquipmentKind } from './assets/manifest';
 import type { TwinStatus } from './shared/events';
 import './ui/styles.css';
@@ -82,6 +86,25 @@ async function bootstrap(): Promise<void> {
   const bvh = interaction.prepare();
   boot.progress(90, `索引就绪（${bvh.meshes} 网格 / ${bvh.ms.toFixed(0)}ms）`);
 
+  // ---------------- 层级管理（厂区 ↔ 车间）
+  const levels = new LevelManager(world.sceneRoot);
+
+  // ---------------- AGV 路网与路径规划
+  boot.progress(92, '构建 AGV 路网…');
+  const network = buildRoadGraph(manifest);
+  const routePlanner = new RoutePlanner(network);
+  const routeVisual = new RouteVisual();
+  app.scene.add(routeVisual.group);
+
+  const fleet = new AgvFleet();
+  for (const entity of world.registry.listEntities()) {
+    if (entity.kind === 'agv') fleet.register(entity.id, entity.root);
+  }
+
+  // 路网基准线（调试可视化，默认隐藏，按 L 显示）
+  const roadHelper = buildRoadHelper(network);
+  app.scene.add(roadHelper.group);
+
   // ---------------- 孪生数据源
   const entities = world.registry.listEntities();
   const twin = new MockTwinSource(
@@ -96,6 +119,7 @@ async function bootstrap(): Promise<void> {
   const hud = new PerfHud(overlay);
   const kpiBar = new KpiBar(overlay);
   const alertFeed = new AlertFeed(overlay);
+  const routePanel = new RoutePanel(overlay, network);
 
   deviceList.render(entities);
 
@@ -159,6 +183,129 @@ async function bootstrap(): Promise<void> {
     },
   });
 
+  // ---------------- 相机模式
+  const flyHint = document.createElement('div');
+  flyHint.className = 'fly-hint';
+  flyHint.innerHTML = '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动 · 拖拽转向 · <kbd>Shift</kbd> 加速 · <kbd>Space</kbd>/<kbd>C</kbd> 升降 · <kbd>Esc</kbd> 退出';
+  overlay.appendChild(flyHint);
+
+  app.cameraMode.onChange(({ mode }) => {
+    topbar.setToolState('fly', mode === 'fly');
+    flyHint.classList.toggle('is-visible', mode === 'fly');
+  });
+
+  levels.onChange((level, config) => {
+    app.orbit.controls.minDistance = config.minDistance;
+    app.orbit.controls.maxDistance = config.maxDistance;
+    app.fly.setSpeed(config.flySpeed);
+    const fog = app.scene.fog as THREE.FogExp2 | null;
+    if (fog && 'density' in fog) fog.density = config.fogDensity;
+    topbar.setActivePreset(level === 'hall' ? 'overview' : 'exterior');
+  });
+
+  // 根据相机位置自动切换层级（进屋自动掀屋顶）
+  let lastInferredLevel = 'site';
+  app.loop.add(() => {
+    if (app.rig.transition.active) return;
+    const inferred = levels.inferLevel(app.rig.camera.position, manifest.hall);
+    if (inferred !== lastInferredLevel) {
+      lastInferredLevel = inferred;
+      levels.setLevel(inferred);
+    }
+  }, 30);
+
+  // 初始层级按首个机位推断
+  lastInferredLevel = levels.inferLevel(presets[0]!.pose.position, manifest.hall);
+  levels.setLevel(lastInferredLevel as 'site' | 'hall');
+
+  // ---------------- 路径规划联动
+  let lastRoute: { distance: number; ms: number; expanded: number } | null = null;
+
+  const planRoute = async (stationId: string): Promise<boolean> => {
+    const station = network.stations.find((s) => s.id === stationId);
+    if (!station) return false;
+    const target = network.points.get(station.nodeId);
+    if (!target) return false;
+
+    // 起点：优先用第一台 AGV 的当前位置；没有 AGV 时用西南角
+    const agv = fleet.list()[0];
+    const from = agv ? agv.root.position.clone() : new THREE.Vector3(-manifest.hall.length * 0.4, 0, -4.5);
+
+    try {
+      const result = await routePlanner.plan(from, target);
+      lastRoute = { distance: result.distance, ms: result.ms, expanded: result.expanded };
+      routeVisual.show(result.curve);
+      routePanel.setResult(lastRoute);
+      app.bus.emit('route:planned', { path: [], distance: result.distance, entityIds: [] });
+      return true;
+    } catch (err) {
+      routePanel.setError((err as Error).message);
+      return false;
+    }
+  };
+
+  routePanel.bind({
+    onPlan: (stationId) => void planRoute(stationId),
+    onClear: () => {
+      routeVisual.clear();
+      routePanel.setResult(null);
+      app.bus.emit('route:clear', {});
+    },
+    onDispatchAgv: (stationId) => {
+      const station = network.stations.find((s) => s.id === stationId);
+      if (!station) return;
+      const target = network.points.get(station.nodeId);
+      if (!target) return;
+      const agvList = fleet.list();
+      if (agvList.length === 0) return;
+      // 轮流派车，避免两台同时抢同一条路
+      const agv = agvList[Math.floor(Math.random() * agvList.length)]!;
+      void routePlanner
+        .plan(agv.root.position.clone(), target)
+        .then((result) => {
+          routeVisual.show(result.curve);
+          routePanel.setResult({
+            distance: result.distance,
+            ms: result.ms,
+            expanded: result.expanded,
+          });
+          fleet.dispatch(agv.entityId, result.curve);
+        })
+        .catch((err) => routePanel.setError((err as Error).message));
+    },
+    onFollowAgv: () => {
+      const agv = fleet.nearest(app.rig.camera.position);
+      if (!agv) return;
+      app.followObject(agv.root);
+      app.setCameraMode('follow');
+      // 跟随的同时选中该 AGV，让信息卡显示其状态
+      interaction.selectEntity(agv.entityId);
+    },
+    onStopFollow: () => {
+      app.setCameraMode('orbit');
+    },
+  });
+
+  // 主循环：路径流光 + AGV 行驶
+  app.loop.add((f) => {
+    routeVisual.update(f);
+  }, 25);
+
+  app.loop.add((f) => {
+    fleet.update(f);
+    // 跟随模式下，若目标 AGV 停下，自动回到 orbit，避免用户卡在跟车里
+    if (app.cameraMode.current === 'follow') {
+      const agv = app.follow.following;
+      if (agv) {
+        const state = fleet.list().find((a) => a.root === agv);
+        if (state && !state.moving) {
+          // 保持跟随静置（不强制退出），用户可自行 Esc 退出
+          void state;
+        }
+      }
+    }
+  }, 26);
+
   // ---------------- 相机与预设
   app.flyTo(presets[0]!.pose, () => {
     topbar.setActivePreset('overview');
@@ -188,9 +335,13 @@ async function bootstrap(): Promise<void> {
       topbar.setToolState('hud', hud.isVisible);
     },
     onToggleFly: () => {
-      const next = !app.orbit.controls.autoRotate;
-      app.orbit.setAutoRotate(next);
-      topbar.setToolState('fly', next);
+      // 三种模式互斥，按钮只在 orbit ↔ fly 之间切换
+      const next = app.cameraMode.current === 'fly' ? 'orbit' : 'fly';
+      app.setCameraMode(next);
+      if (next === 'fly') {
+        // 进入漫游前先取消任何相机飞行
+        app.rig.cancelTransition();
+      }
     },
     onReset: () => {
       applyPreset('overview');
@@ -213,6 +364,7 @@ async function bootstrap(): Promise<void> {
     if (!entity) return;
 
     deviceList.setActive(entityId);
+    document.body.classList.add('card-open');
     const snap = twin.get(entityId);
     const data = InfoCard.fromEntity(entity, snap?.status ?? 'idle');
     data.metrics = metricsFor(snap, entity.kind);
@@ -221,6 +373,7 @@ async function bootstrap(): Promise<void> {
 
   app.bus.on('pick:clear', () => {
     deviceList.setActive(null);
+    document.body.classList.remove('card-open');
     infoCard.hide();
   });
 
@@ -269,8 +422,24 @@ async function bootstrap(): Promise<void> {
         if (sel) twin.injectFault(sel);
         break;
       }
+      case 'l':
+        roadHelper.group.visible = !roadHelper.group.visible;
+        break;
+      case 'g':
+        // 快速派一辆车到包装出库
+        void planRoute('station_b').then((ok) => {
+          if (!ok) return;
+          routePanel.setSelected('station_b');
+        });
+        break;
       case 'escape':
-        interaction.selectEntity(null);
+        if (app.cameraMode.current === 'fly') {
+          app.setCameraMode('orbit');
+        } else if (app.cameraMode.current === 'follow') {
+          app.setCameraMode('orbit');
+        } else {
+          interaction.selectEntity(null);
+        }
         break;
       default:
         break;
@@ -325,6 +494,10 @@ async function bootstrap(): Promise<void> {
   window.addEventListener('beforeunload', () => {
     twin.stop();
     binding.dispose();
+    routePlanner.dispose();
+    routeVisual.dispose();
+    levels.dispose();
+    routePanel.dispose();
     interaction.dispose();
     infoCard.dispose();
     deviceList.dispose();
@@ -333,6 +506,49 @@ async function bootstrap(): Promise<void> {
     hud.dispose();
     app.dispose();
   });
+}
+
+/**
+ * 路网调试可视化：点 + 线。
+ * 默认隐藏，按 L 显示 —— 这是排查「AGV 为什么绕路」最有效的手段。
+ */
+function buildRoadHelper(network: ReturnType<typeof buildRoadGraph>): {
+  group: THREE.Group;
+} {
+  const group = new THREE.Group();
+  group.name = 'ROAD_HELPER';
+  group.visible = false;
+
+  const dotGeo = new THREE.SphereGeometry(0.16, 8, 8);
+  const dotMat = new THREE.MeshBasicMaterial({ color: 0x54e0ff, toneMapped: false });
+  for (const [, p] of network.points) {
+    const dot = new THREE.Mesh(dotGeo, dotMat);
+    dot.position.copy(p);
+    group.add(dot);
+  }
+
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0x54e0ff,
+    transparent: true,
+    opacity: 0.55,
+    toneMapped: false,
+  });
+  const seen = new Set<string>();
+  for (const [id, p] of network.points) {
+    const node = network.graph.nodes[id];
+    if (!node) continue;
+    for (const edge of node.neighbors) {
+      const key = id < edge.id ? `${id}_${edge.id}` : `${edge.id}_${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const q = network.points.get(edge.id);
+      if (!q) continue;
+      const geo = new THREE.BufferGeometry().setFromPoints([p, q]);
+      group.add(new THREE.Line(geo, lineMat));
+    }
+  }
+
+  return { group };
 }
 
 function makeAlert(

@@ -971,3 +971,132 @@ body.ui-hidden .hud {
     display: none;
   }
 }
+
+/* ============================================================ AGV 调度面板 */
+
+.route-panel {
+  position: absolute;
+  top: 62px;
+  right: 12px;
+  width: 226px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  z-index: 24;
+  /* 信息卡显示时下移，避免重叠 */
+  transition: transform 0.24s var(--ease);
+}
+
+body.card-open .route-panel {
+  transform: translateY(calc(100% + 62px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.route-panel__stations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 7px;
+}
+
+.station-btn {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.13s, border-color 0.13s, background 0.13s;
+}
+
+.station-btn:hover {
+  color: var(--text);
+  border-color: var(--panel-border-strong);
+}
+
+.station-btn.is-active {
+  color: #cbe6ff;
+  border-color: rgba(63, 169, 255, 0.62);
+  background: var(--accent-soft);
+}
+
+.route-panel__result {
+  display: flex;
+  gap: 10px;
+  padding: 0 9px 7px;
+  font-size: 10px;
+  color: var(--text-faint);
+  min-height: 16px;
+}
+
+.route-stat b {
+  color: var(--accent);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.route-err {
+  color: var(--bad);
+  font-size: 10px;
+}
+
+.route-panel__actions {
+  display: flex;
+  gap: 4px;
+  padding: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================ 漫游提示 */
+
+.fly-hint {
+  position: absolute;
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  pointer-events: none;
+  z-index: 26;
+  white-space: nowrap;
+}
+
+.fly-hint.is-visible {
+  opacity: 1;
+}
+
+.fly-hint kbd {
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: inherit;
+  font-size: 9px;
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .route-panel {
+    top: auto;
+    bottom: 58px;
+    right: 8px;
+    width: 178px;
+  }
+  .route-panel__actions {
+    display: none;
+  }
+}
