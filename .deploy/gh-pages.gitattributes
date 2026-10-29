@@ -1,0 +1,20 @@
+# GitHub Pages 部署分支使用说明
+#
+# 关键：Pages 不提供 Git LFS 服务（对 LFS 指针文件只会返回指针文本本身，
+# 浏览器拿到的是 "version https://git-lfs.github.com/spec/v1..." 而不是模型）。
+#
+# 因此 gh-pages 分支必须「绕过 LFS」：本分支下的所有文件按普通文件存储。
+# 这里用 .gitattributes 显式取消 LFS filter，覆盖根目录 .gitattributes 的规则。
+#
+# 该文件会随 gh-pages 一起发布，但它本身只是文本，不影响构建产物。
+
+*.glb    -filter -text
+*.gltf   -filter -text
+*.bin    -filter -text
+*.ktx2   -filter -text
+*.hdr    -filter -text
+*.exr    -filter -text
+*.ply    -filter -text
+*.splat  -filter -text
+*.spz    -filter -text
+*.b3dm   -filter -text
