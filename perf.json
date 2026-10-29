@@ -1,4 +1,5 @@
 {
+  "generatedAt": "2026-10-29T10:45:00.000Z",
   "env": {
     "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Laptop GPU (0x00002560) Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "dpr": 1.5,
@@ -6,67 +7,40 @@
     "tier": "high"
   },
   "noPostFx": {
-    "medianMs": 5.2,
-    "p95Ms": 7.5,
-    "fps": 192.3,
+    "medianMs": 5.5,
+    "fps": 181.8,
     "drawCalls": 301,
-    "triangles": 108152,
-    "textures": 13,
-    "programs": 18
+    "triangles": 108152
   },
   "withPostFx": {
-    "medianMs": 5.9,
-    "p95Ms": 13,
-    "fps": 169.5,
+    "medianMs": 6.2,
+    "fps": 161.3,
     "drawCalls": 320,
-    "triangles": 108171,
-    "textures": 35,
-    "programs": 24
+    "triangles": 108171
   },
   "tiers": {
-    "high": {
-      "medianMs": 6.3,
-      "p95Ms": 7.3,
-      "fps": 158.7,
-      "drawCalls": 320,
-      "triangles": 108171,
-      "textures": 37,
-      "programs": 24
-    },
-    "medium": {
-      "medianMs": 8.8,
-      "p95Ms": 9.4,
-      "fps": 113.6,
-      "drawCalls": 320,
-      "triangles": 108171,
-      "textures": 37,
-      "programs": 27
-    },
-    "low": {
-      "medianMs": 3.8,
-      "p95Ms": 5.2,
-      "fps": 263.2,
-      "drawCalls": 136,
-      "triangles": 52016,
-      "textures": 5,
-      "programs": 24
-    }
+    "high": { "medianMs": 6.5, "fps": 153.8, "drawCalls": 320, "triangles": 108171 },
+    "medium": { "medianMs": 8.7, "fps": 114.9, "drawCalls": 320, "triangles": 108171 },
+    "low": { "medianMs": 3.6, "fps": 277.8, "drawCalls": 136, "triangles": 52016 }
   },
   "pickingParts": {
-    "bvhPerPickMs": 0.032,
-    "plainPerPickMs": 0.017,
+    "bvhPerPickMs": 0.038,
+    "plainPerPickMs": 0.018,
     "speedup": 0.5,
     "triangles": 25818
   },
   "pickingStatic": {
-    "bvhPerPickMs": 0.005,
-    "plainPerPickMs": 2.361,
-    "speedup": 472.2,
+    "bvhPerPickMs": 0.008,
+    "plainPerPickMs": 2.363,
+    "speedup": 283.5,
     "triangles": 33108
   },
   "culling": { "total": 179, "visible": 136, "culled": 43, "ratioPct": 24 },
-  "lod": { "level": 0, "switches": 0, "loadMs": 0 },
-  "loadMs": 4,
+  "loadMs": 5,
   "loadBytes": 606832,
-  "_note": "采集方式：页面内 window.__bench()，每档 40 帧采样取中位数，每帧 readPixels 强制 GPU 同步。中位帧耗时不含 rAF 等待与浏览器合成开销，因此等效 FPS 高于实际屏幕帧率。"
+  "runs": [
+    { "noPostFx": 5.2, "withPostFx": 5.9, "staticSpeedup": 472.2 },
+    { "noPostFx": 5.5, "withPostFx": 6.2, "staticSpeedup": 283.5 }
+  ],
+  "_note": "两次独立运行的数据都已保留（runs 字段），可见抖动约 ±0.5ms。采集方式：页面内 window.__bench()，每配置 40 帧采样取中位数，每帧 readPixels 强制 GPU 同步。中位帧耗时不含 rAF 等待与浏览器合成开销，因此等效 FPS 高于实际屏幕帧率。"
 }
